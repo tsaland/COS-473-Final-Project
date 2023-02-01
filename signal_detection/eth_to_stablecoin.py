@@ -1,1 +1,1 @@
-# track whales' eth holdings to stablecoin holdings
+# track whales' eth balance to stablecoin balance ratio
