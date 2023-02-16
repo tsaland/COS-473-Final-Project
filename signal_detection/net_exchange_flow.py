@@ -12,7 +12,7 @@ from convert_date_to_blockNumer import convert_date_to_blockNumber
 from web3 import Web3
 
 def collect_cexflow_by_address(address, startblock, endblock, net_cexflow, exchange_wallets):
-  url = "https://api.etherscan.io/api?module=account&action=txlist&address=" + address + "&startblock=" + str(startblock) + "&endblock=" + str(endblock) + "&page=1&sort=desc&apikey=RUV48VCSWJ1M6YXKY8AFGXQFQ66NFY9H9J"
+  url = "https://api.etherscan.io/api?module=account&action=txlist&address=" + address + "&startblock=" + str(startblock) + "&endblock=" + str(endblock) + "&page=1&sort=desc&apikey=XI4QMN6T6P3RB5WZT6ZH5EUDKM3QJQ7DPQ"
 
   response = requests.get(url, verify=certifi.where())
   print(response)
@@ -61,8 +61,8 @@ def collect_cexflow_by_address(address, startblock, endblock, net_cexflow, excha
   return(n, new_endblock)
 
 def get_cexflow(exchange_wallets, selected_addresses, w3):
-    start_date = date(2022, 1, 1)
-    end_date = date(2022, 12, 31)
+    start_date = date(2018, 1, 1)
+    end_date = date(2023, 1, 1)
     start_block = convert_date_to_blockNumber(start_date, w3)
     end_block = convert_date_to_blockNumber(end_date+timedelta(days=1), w3) # starts from the first block in 2022 and ends in the first block in 2023
 

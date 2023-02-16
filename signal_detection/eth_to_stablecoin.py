@@ -12,7 +12,7 @@ from convert_date_to_blockNumer import convert_date_to_blockNumber
 from web3 import Web3
 
 def collect_eth2stable(selected_addresses, w3):
-    start_date = date(2022, 1, 1)
+    start_date = date(2018, 1, 1)
     end_date = date(2023, 1, 1)
     # startblock = convert_date_to_blockNumber(start_date, w3)
     # endblock = convert_date_to_blockNumber(end_date + timedelta(days=1), w3) # starts from the first block in 2022 and ends in the first block in 2023
