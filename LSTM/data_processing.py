@@ -93,5 +93,4 @@ def data_processing() -> tuple:
 
     x_input = np.array(x_input)
     print("training input has shape", x_input.shape)
-    print(x_input, y_price_change, eth_price)
     return x_input, y_price_change, eth_price
