@@ -16,10 +16,9 @@ def data_processing() -> tuple:
 
     prev_price = data[:, 1]
     today_price = data[:, 0]
-    mask = prev_price != 0.0
 
-    y_price_change = (today_price[mask] - prev_price[mask]) / prev_price[mask]
-    eth_price = today_price[mask]
+    y_price_change = (today_price - prev_price) / prev_price
+    eth_price = today_price
 
     print("first eth price % change is", y_price_change[0])
     y_price_change = y_price_change.reshape(-1, 1)
@@ -28,7 +27,6 @@ def data_processing() -> tuple:
     inFile = URL + 'MWUA_cexflow.csv'
     x_cexflow = np.genfromtxt(inFile, delimiter=',', usecols=(1), dtype=np.float32)
     x_cexflow = x_cexflow[~np.isnan(x_cexflow)]
-
 
     print("first cex flow is", x_cexflow[0])
     x_cexflow = scaler.fit_transform(x_cexflow.reshape(-1, 1))
@@ -41,13 +39,10 @@ def data_processing() -> tuple:
 
     prev_balance = data[:, 1]
     today_balance = data[:, 0]
-    mask = prev_balance != 0.0
 
-    x_balance = (today_balance[mask] - prev_balance[mask]) / prev_balance[mask]
-    x_balance = x_balance.reshape(-1, 1)
-
+    x_balance = (today_balance - prev_balance) / prev_balance
     print("first balance % change is", x_balance[0])
-    x_balance = np.array(x_balance).reshape(-1, 1)
+    x_balance = x_balance.reshape(-1, 1)
 
     # read eth to stables ratio
     inFile = URL + 'MWUA_eth2stable.csv'
@@ -65,12 +60,10 @@ def data_processing() -> tuple:
 
     prev_volume = data[:, 1]
     today_volume = data[:, 0]
-    mask = prev_volume != 0.0
 
-    x_dexvolume = (today_volume[mask] - prev_volume[mask]) / prev_volume[mask]
-    x_dexvolume = x_dexvolume.reshape(-1, 1)
-
+    x_dexvolume = (today_volume - prev_volume) / prev_volume
     print("first dex volume % change is", x_dexvolume[0])
+    x_dexvolume = x_dexvolume.reshape(-1, 1)
 
     # read aave V2 weth stable interest rate
     inFile = URL + 'x_aavestableir.csv'
@@ -92,5 +85,4 @@ def data_processing() -> tuple:
         x_input.append(input_row)
 
     x_input = np.array(x_input)
-    print("training input has shape", x_input.shape)
     return x_input, y_price_change, eth_price
