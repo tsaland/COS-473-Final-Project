@@ -132,7 +132,7 @@ def advanced_momentum_speculator():
     # Compute signals based on technical indicators
     df['signal'] = np.where((df['three_day_returns'] > 0) &
                             (df['rsi'] < 30), 1, 0)
-    df['signal'] = np.where((df['three_day_returns'] > 0) &
+    df['signal'] = np.where((df['three_day_returns'] < 0) &
                             (df['rsi'] > 70), -1, df['signal'])
 
     # Calculate daily eth amount and money spent
@@ -166,7 +166,7 @@ def advanced_momentum_speculator():
 
 #-----------------------------------------------------------------------
 
-# Compute rsi
+# Compute Relative Strength Index (RSI)
 def compute_rsi(df, n=30):
     # Calculate price differences
     delta = df['open_price'].diff()
