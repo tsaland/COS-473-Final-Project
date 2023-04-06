@@ -6,6 +6,8 @@
 import csv
 import random
 import matplotlib.pyplot as plt
+import pandas as pd
+import numpy as np
 
 #-----------------------------------------------------------------------
 
@@ -67,14 +69,127 @@ def dip_hill_speculator():
     print(str(money) + " " + str(eth))
     plt.show()
 
-def momentum_specutlator():
-    #TODO, Thanks Tucker
+
+def momentum_speculator():
+    moneyStart = 100000
+    money = moneyStart
+    eth = 0
+    df = pd.read_csv('General Models/ETH Price 2022 - open_price, close_price.csv',
+                     header=None, names=['date', 'open_price', 'close_price', 'change_price'])
+    plot = []
+    
+    df['date'] = pd.to_datetime(df['date'])
+    df.set_index('date', inplace=True)
+
+    df['three_day_returns'] = df['open_price'].pct_change(periods=3)
+
+    df['signal'] = 0  # 0 = hold, 1 = buy, -1 = sell
+    df.loc[df['three_day_returns'] > 0, 'signal'] = 1  # buy signal
+    df.loc[df['three_day_returns'] < 0, 'signal'] = -1  # sell signal
+
+    # Calculate daily eth amount and money spent
+    for _, row in df.iterrows():
+        price = row['open_price']
+        signal = row['signal']
+
+        if signal == 1:
+            # Buy ETH with available money
+            eth_to_buy = money / price
+            eth += eth_to_buy
+            money -= eth_to_buy * price
+        elif signal == -1:
+            # Sell all ETH and receive money
+            money += eth * price
+            eth = 0
+
+        # Calculate current portfolio value and store in plot list
+        portfolio_value = money + (eth * price)
+        plot.append(portfolio_value)
+
+    # Plot portfolio value over time
+    plt.plot(plot)
+    plt.xlabel('Days Since 1/1/22')
+    plt.ylabel('Portfolio Value')
+    plt.title('Simple Three Day Momentum Speculator')
+
+    plt.show()
+    return
+
+def advanced_momentum_speculator():
+    moneyStart = 100000
+    money = moneyStart
+    eth = 0
+    plot = []
+
+    df = pd.read_csv('General Models/ETH Price 2022 - open_price, close_price.csv',
+                     header=None, names=['date', 'open_price', 'close_price', 'change_price'])
+
+    # Calculate technical indicators
+    df['three_day_returns'] = df['open_price'].pct_change(periods=3)
+    df['rsi'] = compute_rsi(df)
+
+    # Compute signals based on technical indicators
+    df['signal'] = np.where((df['three_day_returns'] > 0) &
+                            (df['rsi'] < 30), 1, 0)
+    df['signal'] = np.where((df['three_day_returns'] > 0) &
+                            (df['rsi'] > 70), -1, df['signal'])
+
+    # Calculate daily eth amount and money spent
+    for _, row in df.iterrows():
+        price = row['open_price']
+        signal = row['signal']
+
+        if signal == 1:
+            # Buy ETH with available money
+            eth_to_buy = money / price
+            eth += eth_to_buy
+            money -= eth_to_buy * price
+
+        elif signal == -1:
+            # Sell all ETH and receive money
+            money += eth * price
+            eth = 0
+        
+        # Calculate current portfolio value and store in plot list
+        portfolio_value = money + (eth * price)
+        plot.append(portfolio_value)
+
+    # Plot portfolio value over time
+    plt.plot(plot)
+    plt.xlabel('Days Since 1/1/22')
+    plt.ylabel('Portfolio Value')
+    plt.title('Advanced Momentum Speculator')
+
+    plt.show()
     return
 
 #-----------------------------------------------------------------------
 
+# Compute rsi
+def compute_rsi(df, n=30):
+    # Calculate price differences
+    delta = df['open_price'].diff()
+
+    # Get the upward and downward price movements
+    up, down = delta.copy(), delta.copy()
+    up[up < 0] = 0
+    down[down > 0] = 0
+
+    # Calculate the smoothed average gain and loss over n periods
+    avg_gain = up.rolling(window=n).mean()
+    avg_loss = abs(down.rolling(window=n).mean())
+
+    # Calculate the Relative Strength (RS) and RSI
+    rs = avg_gain / avg_loss
+    rsi = 100.0 - (100.0 / (1.0 + rs))
+
+    # Return the RSI values as a DataFrame
+    return pd.DataFrame({'rsi': rsi})
+
 def main():
-    dip_hill_speculator()
+    # dip_hill_speculator()
+    momentum_speculator()
+    advanced_momentum_speculator()
 
 #----------------------------------------------------------------------
 
