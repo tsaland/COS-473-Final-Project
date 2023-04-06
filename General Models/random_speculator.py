@@ -69,7 +69,7 @@ def dip_hill_speculator():
     print(str(money) + " " + str(eth))
     plt.show()
 
-
+# Simple three day momentum speculator
 def momentum_speculator():
     moneyStart = 100000
     money = moneyStart
@@ -115,6 +115,7 @@ def momentum_speculator():
     plt.show()
     return
 
+# Advanced momentum speculator with RSI and three day returns
 def advanced_momentum_speculator():
     moneyStart = 100000
     money = moneyStart
