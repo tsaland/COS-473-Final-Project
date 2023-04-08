@@ -105,6 +105,20 @@ import numpy as np
 import matplotlib.pyplot as plt
 import torch.nn as nn
 from data_processing import *
+import matplotlib.ticker as mtick
+
+class LSTM(nn.Module):
+    def __init__(self, input_size, hidden_size, num_layers, output_size, dropout=0.2):
+        super(LSTM, self).__init__()
+        self.hidden_size = hidden_size
+        self.num_layers = num_layers
+        self.lstm = nn.LSTM(input_size, hidden_size, num_layers, dropout=dropout)
+        self.fc = nn.Linear(hidden_size, output_size)
+
+    def forward(self, x):
+        out, _ = self.lstm(x)
+        out = self.fc(out)
+        return out
 
 
 def LSTM_model():
@@ -142,28 +156,19 @@ def LSTM_model():
 
     # build the model
     input_signals = len(x_input[0])
-    model = nn.Sequential(
-        nn.Linear(input_signals+1, 64),
-        nn.LSTM(64, 30, dropout=0.8, proj_size=1)
-    )
-    # model = nn.LSTM(input_signals+1, 30, 2, proj_size=1)
+    model = LSTM(input_signals+1, 64, 2, 1, dropout=0.2)
     criterion = nn.MSELoss()
     optimizer = optim.Adam(model.parameters(), lr=5e-3)
     n_steps = 100
     validate_every = 10
     validation_loss_threshold = 0.0000001
-    last_h0 = ''
-    last_c0 = ''
 
     #begin to train
     model.train()
     for i in range(n_steps):
-        optimizer.zero_grad()
-        out, (h0, c0) = model(train_input)
-        if i == n_steps - 1:
-            last_h0 = h0
-            last_c0 = c0
+        out = model(train_input)
 
+        optimizer.zero_grad()
         loss = criterion(out, train_target)
         loss.backward()
         optimizer.step()  # causes the optimizer to take a step based on the gradients
@@ -171,25 +176,24 @@ def LSTM_model():
         if i % validate_every == 0:
             print('STEP: ', i)
         with torch.no_grad():  # temporarily sets all of the requires_grad flags to false, deactives autograd function, for model validation
-            pred, (_, _) = model(test_input)
+            pred = model(test_input)
             test_loss = criterion(pred, test_target)
             print('test loss:', loss.item())
             y = pred.detach().numpy()
             if test_loss < validation_loss_threshold:
                 break
 
-    return last_c0, last_h0, model, criterion
+    return model
 
 if __name__ == '__main__':
 
-    # c0, h0, model, criterion = LSTM_model()
+    # model = LSTM_model()
 
     # # Save the model
     # torch.save(model.state_dict(), 'model.pth')
 
     x_input, y_price_change, __ = data_processing()
-    print(len(x_input))
-    # Generate random number
+
     index = 250
 
     x_input = x_input[index:index+100, :]
@@ -210,22 +214,23 @@ if __name__ == '__main__':
     train_input = torch.cat((train_input, train_target_shifted_right), 1)
     print(train_input.shape)
 
-    model = nn.Sequential(
-        nn.Linear(len(x_input[0])+1, 64),
-        nn.LSTM(64, 30, dropout=0.8, proj_size=1)
-    )
+    model = LSTM(len(x_input[0])+1, 64, 2, 1, dropout=0.2)
 
     model.load_state_dict(torch.load('model.pth'))
 
     # Make prediction
-    pred, (_, _) = model(train_input)
+    pred = model(train_input)
 
     # Plot the prediction
-    plt.plot(pred.detach().numpy(), color='red', label='LSTM Prediction')
-    plt.plot(train_target.detach().numpy(), color='blue', label='Actual Price')
+    plt.plot((pred.detach().numpy())*100, color='red', label='LSTM Prediction')
+    plt.plot((train_target.detach().numpy())*100, color='blue', label='Actual Price')
     plt.title('ETH Price Prediction')
     plt.xlabel('Days')
-    plt.ylabel('ETH Price')
+    plt.ylabel('Change in ETH Price')
+
+    # Format y-axis as percentage
+    ax = plt.gca()
+    ax.yaxis.set_major_formatter(mtick.PercentFormatter())
     plt.legend()
     plt.show()
 
@@ -245,7 +250,7 @@ if __name__ == '__main__':
     plt.plot(money_list, color='blue', label='LSTM Prediction Returns')
     plt.title('Strategy Returns')
     plt.xlabel('Days')
-    plt.ylabel('Portfolio Value')
+    plt.ylabel('Portfolio Value ($)')
     plt.legend()
     plt.show()
 
