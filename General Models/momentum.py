@@ -1,8 +1,3 @@
-#-----------------------------------------------------------------------
-# random_speculator.py
-# Author: Jackie Chen
-#-----------------------------------------------------------------------
-
 import csv
 import random
 import matplotlib.pyplot as plt
@@ -143,58 +138,58 @@ def main():
     # dip_hill_speculator()
     long_momentum_speculator(n=7, start_date='2022-10-19')
 
-    # # Test momentum strategy with different number of days
-    # num_days = [i for i in range(1, 31)]
+    # Test momentum strategy with different number of days
+    num_days = [i for i in range(1, 31)]
 
-    # # Calculate returns for each number of days
-    # portfolio_returns = []
-    # for n in num_days:
-    #     portfolio_returns.append(long_momentum_speculator(n))
+    # Calculate returns for each number of days
+    portfolio_returns = []
+    for n in num_days:
+        portfolio_returns.append(long_momentum_speculator(n))
 
-    # # Create bar chart of returns
-    # plt.bar(num_days, portfolio_returns)
-    # plt.xlabel('Number of Days Used for Momentum')
-    # plt.ylabel('Portfolio Return (%)')
-    # plt.title('Momentum Speculator Returns From 2018 to 2023', fontsize=10)
+    # Create bar chart of returns
+    plt.bar(num_days, portfolio_returns)
+    plt.xlabel('Number of Days Used for Momentum')
+    plt.ylabel('Portfolio Return (%)')
+    plt.title('Momentum Speculator Returns From 2018 to 2023', fontsize=10)
 
-    # plt.show()
+    plt.show()
 
-    # # Print the number of days and return for the best strategy
-    # highest_returns_index = portfolio_returns.index(max(portfolio_returns))
-    # print(f'Best Strategy: {num_days[highest_returns_index]} days')
+    # Print the number of days and return for the best strategy
+    highest_returns_index = portfolio_returns.index(max(portfolio_returns))
+    print(f'Best Strategy: {num_days[highest_returns_index]} days')
 
-    # # Calculate the best momentum window size for different window ranges (1 week, 2 weeks, 1 month, 3 months, 6 months, 1 year)
-    # start_date = datetime.strptime('2018-01-04', '%Y-%m-%d')
-    # end_date = datetime.strptime('2022-10-31', '%Y-%m-%d')
+    # Calculate the best momentum window size for different window ranges (1 week, 2 weeks, 1 month, 3 months, 6 months, 1 year)
+    start_date = datetime.strptime('2018-01-04', '%Y-%m-%d')
+    end_date = datetime.strptime('2022-10-31', '%Y-%m-%d')
 
-    # # Calculate end dates for each window range
-    # num_days = (end_date - start_date).days
-    # end_dates = []
-    # num_weeks_from_start = []
-    # for days in range(21, num_days + 1, 7):
-    #     end_dates.append(start_date + timedelta(days))
-    #     num_weeks_from_start.append((int)(days / 7))
+    # Calculate end dates for each window range
+    num_days = (end_date - start_date).days
+    end_dates = []
+    num_weeks_from_start = []
+    for days in range(21, num_days + 1, 7):
+        end_dates.append(start_date + timedelta(days))
+        num_weeks_from_start.append((int)(days / 7))
 
-    # # Calculate the best momentum window size for each window range
-    # num_days = [i for i in range(1, 22)]
-    # best_momentum_window_size = []
-    # for end_date in end_dates:
-    #     print(f'Calculating best momentum window size for {end_date}...')
-    #     # Calculate returns for each number of days
-    #     portfolio_returns = []
-    #     for n in num_days:
-    #         portfolio_returns.append(long_momentum_speculator(n, start_date, end_date))
+    # Calculate the best momentum window size for each window range
+    num_days = [i for i in range(1, 22)]
+    best_momentum_window_size = []
+    for end_date in end_dates:
+        print(f'Calculating best momentum window size for {end_date}...')
+        # Calculate returns for each number of days
+        portfolio_returns = []
+        for n in num_days:
+            portfolio_returns.append(long_momentum_speculator(n, start_date, end_date))
 
-    #     # Append the best momentum window size for the current window range
-    #     highest_returns_index = portfolio_returns.index(max(portfolio_returns))
-    #     best_momentum_window_size.append(num_days[highest_returns_index])
+        # Append the best momentum window size for the current window range
+        highest_returns_index = portfolio_returns.index(max(portfolio_returns))
+        best_momentum_window_size.append(num_days[highest_returns_index])
 
-    # # Create graph of best momentum window size for each window range
-    # plt.scatter(num_weeks_from_start, best_momentum_window_size)
-    # plt.xlabel('Number of Weeks')
-    # plt.ylabel('Best Momentum Window Size')
-    # plt.title('Best Momentum Window Size for Different Window Ranges', fontsize=10)
-    # plt.show()
+    # Create graph of best momentum window size for each window range
+    plt.scatter(num_weeks_from_start, best_momentum_window_size)
+    plt.xlabel('Number of Weeks')
+    plt.ylabel('Best Momentum Window Size')
+    plt.title('Best Momentum Window Size for Different Window Ranges', fontsize=10)
+    plt.show()
 
 
 
