@@ -1,29 +1,22 @@
-import os
 import numpy as np
 from sklearn.preprocessing import MinMaxScaler
-
-def remove_nans_and_zeros(data):
-    data = data[~np.isnan(data).any(axis=1)]
-    data = data[data[:, 1] != 0.0]
-    return data
-
-def read_data_file(filename):
-    path = os.path.join('data', filename)
-    data = np.genfromtxt(path, delimiter=',', usecols=(1,), dtype=np.float32)
-    data = remove_nans_and_zeros(data)
-    return data
-
-def combine_input_data(*arrays):
-    return np.concatenate([a.reshape(-1, 1) for a in arrays], axis=1)
 
 def data_processing() -> tuple:
     print('starting data processing...')
     scaler = MinMaxScaler()
-
     # read eth price
-    eth_price_data = read_data_file('y_ethprice.csv')
-    prev_price = eth_price_data[:, 1]
-    today_price = eth_price_data[:, 0]
+    URL = r'C:\\Users\\tucke\\OneDrive\\Documents\\on-chain-defi-analytics\\LSTM\\all_data\\'
+    inFile = URL + 'y_ethprice.csv'
+    
+    data = np.genfromtxt(inFile, delimiter=',',
+                         usecols=(1, 2), dtype=np.float32)
+    
+    data = data[~np.isnan(data).any(axis=1)]
+    data = data[data[:, 1] != 0.0]
+
+    prev_price = data[:, 1]
+    today_price = data[:, 0]
+
     y_price_change = (today_price - prev_price) / prev_price
     eth_price = today_price
 
@@ -31,38 +24,65 @@ def data_processing() -> tuple:
     y_price_change = y_price_change.reshape(-1, 1)
 
     # read cex flow
-    x_cexflow = read_data_file('MWUA_cexflow.csv')
+    inFile = URL + 'MWUA_cexflow.csv'
+    x_cexflow = np.genfromtxt(inFile, delimiter=',', usecols=(1), dtype=np.float32)
+    x_cexflow = x_cexflow[~np.isnan(x_cexflow)]
+
     print("first cex flow is", x_cexflow[0])
     x_cexflow = scaler.fit_transform(x_cexflow.reshape(-1, 1))
 
     # read eth balance
-    balance_data = read_data_file('MWUA_balance.csv')
-    prev_balance = balance_data[:, 1]
-    today_balance = balance_data[:, 0]
+    inFile = URL + 'MWUA_balance.csv'
+    data = np.genfromtxt(inFile, delimiter=',',usecols=(1, 2), dtype=np.float32)
+    data = data[~np.isnan(data).any(axis=1)]
+    data = data[data[:, 1] != 0.0]
+
+    prev_balance = data[:, 1]
+    today_balance = data[:, 0]
+
     x_balance = (today_balance - prev_balance) / prev_balance
     print("first balance % change is", x_balance[0])
     x_balance = x_balance.reshape(-1, 1)
 
     # read eth to stables ratio
-    x_eth2stables = read_data_file('MWUA_eth2stable.csv')
+    inFile = URL + 'MWUA_eth2stable.csv'
+    x_eth2stables = np.genfromtxt(inFile, delimiter=',', usecols=(1), dtype=np.float32)
+    x_eth2stables = x_eth2stables[~np.isnan(x_eth2stables)]
+
     print("first eth2stable is", x_eth2stables[0])
     x_eth2stables = scaler.fit_transform(x_eth2stables.reshape(-1, 1))
 
     # read dex eth trading volume
-    volume_data = read_data_file('x_ethdexvolume.csv')
-    prev_volume = volume_data[:, 1]
-    today_volume = volume_data[:, 0]
+    inFile = URL + 'x_ethdexvolume.csv'
+    data = np.genfromtxt(inFile, delimiter=',', usecols=(1, 2), dtype=np.float32)
+    data = data[~np.isnan(data).any(axis=1)]
+    data = data[data[:, 1] != 0.0]
+
+    prev_volume = data[:, 1]
+    today_volume = data[:, 0]
+
     x_dexvolume = (today_volume - prev_volume) / prev_volume
     print("first dex volume % change is", x_dexvolume[0])
     x_dexvolume = x_dexvolume.reshape(-1, 1)
 
     # read aave V2 weth stable interest rate
-    x_interest_rate = read_data_file('MWUA_interestrate.csv')
+    inFile = URL + 'x_aavestableir.csv'
+    x_interest_rate = np.genfromtxt(inFile, delimiter=',', usecols=(1), dtype=np.float32)
+    x_interest_rate = x_interest_rate[~np.isnan(x_interest_rate)]
 
     print("first interest rate is", x_interest_rate[0])
-
     x_interest_rate = scaler.fit_transform(x_interest_rate.reshape(-1, 1))
 
-    x_input = combine_input_data(x_cexflow, x_balance, x_eth2stables, x_dexvolume, x_interest_rate)
+    #  aggregate all inputs into a single numpy array with length of cex flow
+    x_input = []
+    for row in range(len(x_cexflow)):
+        input_row = []
+        input_row.append(x_cexflow[row][0])
+        input_row.append(x_balance[row][0])
+        input_row.append(x_eth2stables[row][0])
+        input_row.append(x_dexvolume[row][0])
+        input_row.append(x_interest_rate[row][0])
+        x_input.append(input_row)
 
+    x_input = np.array(x_input)
     return x_input, y_price_change, eth_price

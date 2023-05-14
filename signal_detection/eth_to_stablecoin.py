@@ -1,4 +1,6 @@
 # track whales' eth balance to stablecoin balance ratio
+import csv
+from datetime import date
 import json
 import requests
 import certifi
@@ -11,51 +13,48 @@ import statistics
 from convert_date_to_blockNumer import convert_date_to_blockNumber
 from web3 import Web3
 
+
 def collect_eth2stable(selected_addresses, w3):
     start_date = date(2018, 1, 1)
     end_date = date(2023, 1, 1)
-    # startblock = convert_date_to_blockNumber(start_date, w3)
-    # endblock = convert_date_to_blockNumber(end_date + timedelta(days=1), w3) # starts from the first block in 2022 and ends in the first block in 2023
 
-    ETHPercentHolding_hashmap = dict() # hashmap records 
+    ETH_percent_holding = {}  # hashmap records
+    wallet_balances = {}  # dictionary to store wallet balances
     daterange = pd.date_range(start_date, end_date)
     for single_date in daterange:
-        ETHPercentHolding_hashmap[single_date.date().strftime("%Y/%m/%d")] = 0 # mapping from date to total balance oF all whales
+        # mapping from date to total balance oF all whales
+        ETH_percent_holding[single_date.date().strftime("%Y/%m/%d")] = 0
+
     stablecoin_contracts = get_stablecontracts(w3)
 
-    # selected_addresses = ['0xB8001C3eC9AA1985f6c747E25c28324E4A361ec1', '0xD7efCbB86eFdD9E8dE014dafA5944AaE36E817e4', '0x6081258689a75d253d87cE902A8de3887239Fe80', '0xCD531Ae9EFCCE479654c4926dec5F6209531Ca7b', '0x4f6742bADB049791CD9A37ea913f2BAC38d01279']
-    # add initial balance of the address to all dates of the year and later only track changes
     for single_date in daterange:
         this_block = convert_date_to_blockNumber(single_date.date(), w3)
-        total_eth_balance = 0
-        total_stablecoin_balance = 0
         for address in selected_addresses:
             checksum = Web3.toChecksumAddress(address)
-            total_eth_balance += float(w3.fromWei(w3.eth.get_balance(checksum, block_identifier=this_block), 'ether'))
+            total_eth_balance = float(w3.fromWei(w3.eth.get_balance(
+                checksum, block_identifier=this_block), 'ether'))
+            total_stablecoin_balance = 0
             for contract in stablecoin_contracts:
                 total_stablecoin_balance += contract.functions.balanceOf(checksum).call(block_identifier=this_block)/1000000000000000000.0
 
-        ETHPercentHolding_hashmap[single_date.strftime("%Y/%m/%d")] = total_eth_balance / total_stablecoin_balance
+            wallet_balances[(single_date.date().strftime(
+                "%Y/%m/%d"), address)] = total_eth_balance / total_stablecoin_balance
         print("finished date:", single_date.date())
 
-    print(ETHPercentHolding_hashmap)
-    # visualize balance changes in ETH percentage holding of whales
-    dates = list(ETHPercentHolding_hashmap.keys())
-    dates = [e[5:] for e in dates]
-    print(dates)
-    plt.figure(figsize=(15, 8))
-    plt.bar(range(len(ETHPercentHolding_hashmap)), ETHPercentHolding_hashmap.values(), width=1.0)
-    plt.xticks(rotation=70)
-    plt.xticks(range(0, len(dates), 30))
-    plt.xticks(range(0, len(dates), 30), dates[0::30])
-    plt.grid(True)
+    return ETH_percent_holding, wallet_balances
 
-    plt.xlabel('Dates')
-    plt.ylabel('Ether to Stablecoin Ratio')
-    plt.title('Whales Balance of #ETH to #Stablecoin Ratio', loc='left')
-    plt.show()
+def balance_to_csv(ETH_perent_holding, wallet_balances):
+    with open('eth2stable.csv', 'w', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(["date", "address", "eth2stable"])
+        for key, value in wallet_balances.items():
+            writer.writerow([key[0], key[1], value])
 
-    return ETHPercentHolding_hashmap
+    with open('eth2stable_total.csv', 'w', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(["date", "eth2stable"])
+        for key, value in ETH_perent_holding.items():
+            writer.writerow([key, value])
 
 
 #@title Stablecoin Contracts (USDT, USDC, DAI)

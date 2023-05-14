@@ -74,19 +74,25 @@ def dip_hill_speculator():
     print(str(money) + " " + str(eth))
     plt.show()
 
-# Simple three day momentum speculator that only opens long positions
-def long_momentum_speculator(n=3, start_date ='2018-01-04', end_date ='2022-10-31'):
+# Simple momentum speculator that only opens long positions
+def long_momentum_speculator(n=3, start_date ='2018-01-04', end_date ='2023-01-01'):
     moneyStart = 100000
     money = moneyStart
     eth = 0
-    df = pd.read_csv('General Models\eth_price.csv',
-                     header=None, names=['date', 'open_price', 'close_price'])
+    df = pd.read_csv('General Models\eth_price_2022.csv',
+                     header=None, names=['date', 'open_price', 'close_price', 'change'])
     
     df['date'] = pd.to_datetime(df['date'])
     df.set_index('date', inplace=True)
 
+    # Sort by date
+    df.sort_index(inplace=True)
+
     # Restrict to start and end date
     df = df.loc[start_date:end_date]
+
+    initial_ETH_price = df['open_price'][0]
+    ETH_hold = moneyStart/initial_ETH_price
 
     df['momentum_returns'] = df['open_price'].pct_change(periods=n)
 
@@ -96,8 +102,10 @@ def long_momentum_speculator(n=3, start_date ='2018-01-04', end_date ='2022-10-3
 
     # Calculate daily eth amount and money spent
     portfolio_values = []
+    hold_value = []
     dates = []
     for date, row in df.iterrows():
+        # Calculate ETH to hold at beginning of period
         price = row['open_price']
         signal = row['signal']
 
@@ -113,99 +121,29 @@ def long_momentum_speculator(n=3, start_date ='2018-01-04', end_date ='2022-10-3
 
         # Calculate current portfolio value and store in plot list
         portfolio_value = money + (eth * price)
+        hold_value.append(ETH_hold * price)
+
         dates.append(date)
         portfolio_values.append(portfolio_value)
 
     # Plot portfolio value over time
-    plt.plot(dates, portfolio_values)
-    plt.xlabel('Year')
+    plt.plot(portfolio_values, label='Momentum Strategy')
+    plt.plot(hold_value, label='Buying and Holding Only')
+    plt.xlabel('Days')
     plt.ylabel('Portfolio Value ($)')
     plt.title('Long Momentum Speculator (n=' + str(n) + ')')
+    plt.legend()
     plt.show()
 
-    portfolio_return = ((portfolio_value - moneyStart) / moneyStart) * 100
+    portfolio_return = ((portfolio_value[-1] - moneyStart) / moneyStart) * 100
     
     return portfolio_return
 
-# # Advanced momentum speculator with RSI and three day returns
-# def advanced_momentum_speculator():
-#     moneyStart = 100000
-#     money = moneyStart
-#     eth = 0
-#     plot = []
-
-#     df = pd.read_csv('General Models/ETH Price 2022 - open_price, close_price.csv',
-#                      header=None, names=['date', 'open_price', 'close_price', 'change_price'])
-
-#     # Calculate technical indicators
-#     df['three_day_returns'] = df['open_price'].pct_change(periods=3)
-#     df['rsi'] = compute_rsi(df)
-
-#     # Compute signals based on technical indicators
-#     df['signal'] = np.where((df['three_day_returns'] > 0) &
-#                             (df['rsi'] < 30), 1, 0)
-#     df['signal'] = np.where((df['three_day_returns'] < 0) &
-#                             (df['rsi'] > 70), -1, df['signal'])
-
-#     # Calculate daily eth amount and money spent
-#     for _, row in df.iterrows():
-#         price = row['open_price']
-#         signal = row['signal']
-
-#         if signal == 1:
-#             # Buy ETH with available money
-#             eth_to_buy = money / price
-#             eth += eth_to_buy
-#             money -= eth_to_buy * price
-
-#         elif signal == -1:
-#             # Sell all ETH and receive money
-#             money += eth * price
-#             eth = 0
-        
-#         # Calculate current portfolio value and store in plot list
-#         portfolio_value = money + (eth * price)
-#         plot.append(portfolio_value)
-
-#     # Plot portfolio value over time
-#     plt.plot(plot)
-#     plt.xlabel('Days Since 1/1/22')
-#     plt.ylabel('Portfolio Value')
-#     plt.title('Advanced Momentum Speculator')
-
-#     plt.show()    
-
-#     return
-
-# #-----------------------------------------------------------------------
-
-# # Compute Relative Strength Index (RSI)
-# def compute_rsi(df, n=30):
-#     # Calculate price differences
-#     delta = df['open_price'].diff()
-
-#     # Get the upward and downward price movements
-#     up, down = delta.copy(), delta.copy()
-#     up[up < 0] = 0
-#     down[down > 0] = 0
-
-#     # Calculate the smoothed average gain and loss over n periods
-#     avg_gain = up.rolling(window=n).mean()
-#     avg_loss = abs(down.rolling(window=n).mean())
-
-#     # Calculate the Relative Strength (RS) and RSI
-#     rs = avg_gain / avg_loss
-#     rsi = 100.0 - (100.0 / (1.0 + rs))
-
-#     # Return the RSI values as a DataFrame
-#     return pd.DataFrame({'rsi': rsi})
-
 def main():
     # dip_hill_speculator()
-    long_momentum_speculator(n=3)
-    # advanced_momentum_speculator()
+    long_momentum_speculator(n=7, start_date='2022-10-19')
 
-    # Test momentum strategy with different number of days
+    # # Test momentum strategy with different number of days
     # num_days = [i for i in range(1, 31)]
 
     # # Calculate returns for each number of days
@@ -225,7 +163,7 @@ def main():
     # highest_returns_index = portfolio_returns.index(max(portfolio_returns))
     # print(f'Best Strategy: {num_days[highest_returns_index]} days')
 
-    # Calculate the best momentum window size for different window ranges (1 week, 2 weeks, 1 month, 3 months, 6 months, 1 year)
+    # # Calculate the best momentum window size for different window ranges (1 week, 2 weeks, 1 month, 3 months, 6 months, 1 year)
     # start_date = datetime.strptime('2018-01-04', '%Y-%m-%d')
     # end_date = datetime.strptime('2022-10-31', '%Y-%m-%d')
 
